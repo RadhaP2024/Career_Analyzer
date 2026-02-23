@@ -1,0 +1,821 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Career Suggestion{% endblock %}
+
+{% block content %}
+<style>
+    .interest-card {
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .interest-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+    .interest-card.selected {
+        border-color: #007bff;
+        background-color: #f0f8ff;
+        transform: scale(1.02);
+    }
+    .interest-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    .result-card {
+        border-radius: 20px;
+        overflow: hidden;
+        animation: slideIn 0.5s ease-out;
+    }
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .badge-skill {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin: 3px;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+    .badge-skill:hover {
+        background-color: #007bff;
+        color: white;
+        transform: scale(1.05);
+    }
+    .company-badge {
+        background-color: #28a745;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        margin: 3px;
+        display: inline-block;
+    }
+    .progress-custom {
+        height: 30px;
+        border-radius: 15px;
+        background-color: #e9ecef;
+        margin: 10px 0;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        transition: width 1s ease-in-out;
+    }
+    .personality-tag {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 25px;
+        margin: 5px;
+        font-weight: 500;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h1 class="display-4">🎯 Career Suggestion Engine</h1>
+        <p class="lead">Find the perfect engineering branch based on your interests and personality</p>
+        <hr>
+    </div>
+</div>
+
+<!-- Interest Selection Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3 class="text-center mb-4">What interests you the most?</h3>
+        <p class="text-center text-muted mb-4">Click on any card to get personalized career suggestions</p>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card interest-card h-100" onclick="selectInterest(1)" id="interest-1">
+            <div class="card-body text-center">
+                <div class="interest-icon">💻</div>
+                <h4>Coding & Technology</h4>
+                <p class="text-muted">Programming, AI, Software Development, Web Technologies</p>
+                <div class="mt-3">
+                    <span class="badge bg-primary">High Demand</span>
+                    <span class="badge bg-success">Excellent Salary</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card interest-card h-100" onclick="selectInterest(2)" id="interest-2">
+            <div class="card-body text-center">
+                <div class="interest-icon">🔧</div>
+                <h4>Machines & Robotics</h4>
+                <p class="text-muted">Vehicles, Automation, Manufacturing, Mechanical Systems</p>
+                <div class="mt-3">
+                    <span class="badge bg-warning">EV Boom</span>
+                    <span class="badge bg-info">Hands-on Work</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card interest-card h-100" onclick="selectInterest(3)" id="interest-3">
+            <div class="card-body text-center">
+                <div class="interest-icon">🏗️</div>
+                <h4>Buildings & Construction</h4>
+                <p class="text-muted">Infrastructure, Design, Project Management, Smart Cities</p>
+                <div class="mt-3">
+                    <span class="badge bg-secondary">Government Projects</span>
+                    <span class="badge bg-success">Stable Career</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card interest-card h-100" onclick="selectInterest(4)" id="interest-4">
+            <div class="card-body text-center">
+                <div class="interest-icon">📱</div>
+                <h4>Electronics & Gadgets</h4>
+                <p class="text-muted">Circuits, IoT, Semiconductors, Communication Systems</p>
+                <div class="mt-3">
+                    <span class="badge bg-danger">Semiconductor Growth</span>
+                    <span class="badge bg-info">5G Technology</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card interest-card h-100" onclick="selectInterest(5)" id="interest-5">
+            <div class="card-body text-center">
+                <div class="interest-icon">⚗️</div>
+                <h4>Chemicals & Research</h4>
+                <p class="text-muted">Processes, Green Chemistry, Pharmaceuticals, Materials</p>
+                <div class="mt-3">
+                    <span class="badge bg-success">Green Energy</span>
+                    <span class="badge bg-primary">R&D Focus</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card interest-card h-100" onclick="selectInterest(6)" id="interest-6">
+            <div class="card-body text-center">
+                <div class="interest-icon">✈️</div>
+                <h4>Aircraft & Space</h4>
+                <p class="text-muted">Aerodynamics, Space Technology, Drones, Defense</p>
+                <div class="mt-3">
+                    <span class="badge bg-warning">Space Tech</span>
+                    <span class="badge bg-danger">Defense Sector</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Section (Initially Hidden) -->
+<div id="results-section" style="display: none;">
+    <!-- Computer Science Result -->
+    <div id="result-1" class="result-section">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card border-primary">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h2 class="mb-0"><i class="fas fa-robot me-2"></i>Based on your interest in Coding & Technology</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="display-1 mb-3">💻</div>
+                                <h2 class="text-primary">Computer Science</h2>
+                                <p class="lead">Perfect Match! 🎯</p>
+                                <div class="mt-4">
+                                    <div class="progress-custom">
+                                        <div class="progress-fill bg-success" style="width: 95%;">95% Match</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line text-primary me-2"></i>Placement Stats</h5>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2024 Placement
+                                                <span class="badge bg-primary rounded-pill">88%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2026 Prediction
+                                                <span class="badge bg-success rounded-pill">91%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Average Salary
+                                                <span class="badge bg-info rounded-pill">₹9.2 LPA</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Growth Rate
+                                                <span class="badge bg-warning rounded-pill">+3%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-building text-success me-2"></i>Top Recruiters</h5>
+                                        <div class="mb-3">
+                                            <span class="company-badge">Google</span>
+                                            <span class="company-badge">Microsoft</span>
+                                            <span class="company-badge">Amazon</span>
+                                            <span class="company-badge">Infosys</span>
+                                            <span class="company-badge">TCS</span>
+                                            <span class="company-badge">Wipro</span>
+                                        </div>
+                                        <h5 class="mt-3"><i class="fas fa-tools text-warning me-2"></i>Skills to Learn</h5>
+                                        <div>
+                                            <span class="badge-skill">Python</span>
+                                            <span class="badge-skill">Java</span>
+                                            <span class="badge-skill">AI/ML</span>
+                                            <span class="badge-skill">Cloud</span>
+                                            <span class="badge-skill">Cybersecurity</span>
+                                            <span class="badge-skill">Data Science</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5><i class="fas fa-clock text-info me-2"></i>Future Trends</h5>
+                                <p class="text-muted">AI jobs will grow by 40%, Cybersecurity demand increasing, Cloud computing expansion with 30% year-on-year growth.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mechanical Result -->
+    <div id="result-2" class="result-section">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card border-success">
+                    <div class="card-header bg-success text-white text-center py-3">
+                        <h2 class="mb-0"><i class="fas fa-car me-2"></i>Based on your interest in Machines & Robotics</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="display-1 mb-3">🔧</div>
+                                <h2 class="text-success">Mechanical Engineering</h2>
+                                <p class="lead">Excellent Choice! 🚗</p>
+                                <div class="mt-4">
+                                    <div class="progress-custom">
+                                        <div class="progress-fill bg-success" style="width: 88%;">88% Match</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line text-success me-2"></i>Placement Stats</h5>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2024 Placement
+                                                <span class="badge bg-primary rounded-pill">72%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2026 Prediction
+                                                <span class="badge bg-success rounded-pill">75%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Average Salary
+                                                <span class="badge bg-info rounded-pill">₹6.5 LPA</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Growth Rate
+                                                <span class="badge bg-warning rounded-pill">+3%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-building text-success me-2"></i>Top Recruiters</h5>
+                                        <div class="mb-3">
+                                            <span class="company-badge">TATA Motors</span>
+                                            <span class="company-badge">Mahindra</span>
+                                            <span class="company-badge">L&T</span>
+                                            <span class="company-badge">Maruti</span>
+                                            <span class="company-badge">Tesla</span>
+                                            <span class="company-badge">BMW</span>
+                                        </div>
+                                        <h5 class="mt-3"><i class="fas fa-tools text-warning me-2"></i>Skills to Learn</h5>
+                                        <div>
+                                            <span class="badge-skill">CAD/CAM</span>
+                                            <span class="badge-skill">Robotics</span>
+                                            <span class="badge-skill">EV Technology</span>
+                                            <span class="badge-skill">3D Printing</span>
+                                            <span class="badge-skill">Thermodynamics</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5><i class="fas fa-clock text-info me-2"></i>Future Trends</h5>
+                                <p class="text-muted">EV sector boom with 35% job growth, Robotics automation expanding, Additive manufacturing revolutionizing production.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Civil Result -->
+    <div id="result-3" class="result-section">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card border-warning">
+                    <div class="card-header bg-warning text-white text-center py-3">
+                        <h2 class="mb-0"><i class="fas fa-hard-hat me-2"></i>Based on your interest in Buildings & Construction</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="display-1 mb-3">🏗️</div>
+                                <h2 class="text-warning">Civil Engineering</h2>
+                                <p class="lead">Great Choice! 🏢</p>
+                                <div class="mt-4">
+                                    <div class="progress-custom">
+                                        <div class="progress-fill bg-success" style="width: 82%;">82% Match</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line text-warning me-2"></i>Placement Stats</h5>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2024 Placement
+                                                <span class="badge bg-primary rounded-pill">68%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2026 Prediction
+                                                <span class="badge bg-success rounded-pill">70%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Average Salary
+                                                <span class="badge bg-info rounded-pill">₹5.9 LPA</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Growth Rate
+                                                <span class="badge bg-warning rounded-pill">+2%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-building text-warning me-2"></i>Top Recruiters</h5>
+                                        <div class="mb-3">
+                                            <span class="company-badge">L&T</span>
+                                            <span class="company-badge">Shapoorji</span>
+                                            <span class="company-badge">GMR</span>
+                                            <span class="company-badge">DLF</span>
+                                            <span class="company-badge">TATA Projects</span>
+                                        </div>
+                                        <h5 class="mt-3"><i class="fas fa-tools text-warning me-2"></i>Skills to Learn</h5>
+                                        <div>
+                                            <span class="badge-skill">BIM</span>
+                                            <span class="badge-skill">Project Management</span>
+                                            <span class="badge-skill">AutoCAD</span>
+                                            <span class="badge-skill">Structural Analysis</span>
+                                            <span class="badge-skill">Sustainable Materials</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5><i class="fas fa-clock text-info me-2"></i>Future Trends</h5>
+                                <p class="text-muted">Infrastructure projects under National Pipeline, 100 Smart City projects, Green building initiatives creating new opportunities.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Electronics Result -->
+    <div id="result-4" class="result-section">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card border-danger">
+                    <div class="card-header bg-danger text-white text-center py-3">
+                        <h2 class="mb-0"><i class="fas fa-microchip me-2"></i>Based on your interest in Electronics & Gadgets</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="display-1 mb-3">📱</div>
+                                <h2 class="text-danger">Electronics Engineering</h2>
+                                <p class="lead">Excellent Choice! 📡</p>
+                                <div class="mt-4">
+                                    <div class="progress-custom">
+                                        <div class="progress-fill bg-success" style="width: 90%;">90% Match</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line text-danger me-2"></i>Placement Stats</h5>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2024 Placement
+                                                <span class="badge bg-primary rounded-pill">79%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2026 Prediction
+                                                <span class="badge bg-success rounded-pill">82%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Average Salary
+                                                <span class="badge bg-info rounded-pill">₹7.8 LPA</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Growth Rate
+                                                <span class="badge bg-warning rounded-pill">+3%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-building text-danger me-2"></i>Top Recruiters</h5>
+                                        <div class="mb-3">
+                                            <span class="company-badge">Intel</span>
+                                            <span class="company-badge">Samsung</span>
+                                            <span class="company-badge">Qualcomm</span>
+                                            <span class="company-badge">Texas Instruments</span>
+                                            <span class="company-badge">NVIDIA</span>
+                                        </div>
+                                        <h5 class="mt-3"><i class="fas fa-tools text-warning me-2"></i>Skills to Learn</h5>
+                                        <div>
+                                            <span class="badge-skill">VLSI Design</span>
+                                            <span class="badge-skill">Embedded Systems</span>
+                                            <span class="badge-skill">IoT</span>
+                                            <span class="badge-skill">PCB Design</span>
+                                            <span class="badge-skill">Communication Systems</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5><i class="fas fa-clock text-info me-2"></i>Future Trends</h5>
+                                <p class="text-muted">Semiconductor industry growth with ₹76,000 Cr PLI scheme, IoT devices expansion, 5G implementation creating 1M+ jobs.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chemical Result -->
+    <div id="result-5" class="result-section">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card border-purple" style="border-color: #9b59b6;">
+                    <div class="card-header text-white text-center py-3" style="background-color: #9b59b6;">
+                        <h2 class="mb-0"><i class="fas fa-flask me-2"></i>Based on your interest in Chemicals & Research</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="display-1 mb-3">⚗️</div>
+                                <h2 style="color: #9b59b6;">Chemical Engineering</h2>
+                                <p class="lead">Great Choice! 🔬</p>
+                                <div class="mt-4">
+                                    <div class="progress-custom">
+                                        <div class="progress-fill bg-success" style="width: 85%;">85% Match</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line text-purple me-2"></i>Placement Stats</h5>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2024 Placement
+                                                <span class="badge bg-primary rounded-pill">71%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2026 Prediction
+                                                <span class="badge bg-success rounded-pill">74%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Average Salary
+                                                <span class="badge bg-info rounded-pill">₹6.8 LPA</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Growth Rate
+                                                <span class="badge bg-warning rounded-pill">+3%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-building text-purple me-2"></i>Top Recruiters</h5>
+                                        <div class="mb-3">
+                                            <span class="company-badge">Reliance</span>
+                                            <span class="company-badge">BASF</span>
+                                            <span class="company-badge">Dow Chemical</span>
+                                            <span class="company-badge">Shell</span>
+                                            <span class="company-badge">BPCL</span>
+                                            <span class="company-badge">IOCL</span>
+                                        </div>
+                                        <h5 class="mt-3"><i class="fas fa-tools text-warning me-2"></i>Skills to Learn</h5>
+                                        <div>
+                                            <span class="badge-skill">Process Optimization</span>
+                                            <span class="badge-skill">Green Chemistry</span>
+                                            <span class="badge-skill">Data Analysis</span>
+                                            <span class="badge-skill">Thermodynamics</span>
+                                            <span class="badge-skill">ASPEN</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5><i class="fas fa-clock text-info me-2"></i>Future Trends</h5>
+                                <p class="text-muted">Green chemistry emerging, Pharmaceutical sector stable growth, Sustainable processes demand up 45%, Biotech integration.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aerospace Result -->
+    <div id="result-6" class="result-section">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card border-info">
+                    <div class="card-header bg-info text-white text-center py-3">
+                        <h2 class="mb-0"><i class="fas fa-rocket me-2"></i>Based on your interest in Aircraft & Space</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="display-1 mb-3">✈️</div>
+                                <h2 class="text-info">Aerospace Engineering</h2>
+                                <p class="lead">Perfect Match! 🚀</p>
+                                <div class="mt-4">
+                                    <div class="progress-custom">
+                                        <div class="progress-fill bg-success" style="width: 92%;">92% Match</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line text-info me-2"></i>Placement Stats</h5>
+                                        <ul class="list-group mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2024 Placement
+                                                <span class="badge bg-primary rounded-pill">75%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                2026 Prediction
+                                                <span class="badge bg-success rounded-pill">78%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Average Salary
+                                                <span class="badge bg-info rounded-pill">₹8.1 LPA</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Growth Rate
+                                                <span class="badge bg-warning rounded-pill">+3%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-building text-info me-2"></i>Top Recruiters</h5>
+                                        <div class="mb-3">
+                                            <span class="company-badge">ISRO</span>
+                                            <span class="company-badge">DRDO</span>
+                                            <span class="company-badge">Boeing</span>
+                                            <span class="company-badge">Airbus</span>
+                                            <span class="company-badge">HAL</span>
+                                            <span class="company-badge">SpaceX</span>
+                                        </div>
+                                        <h5 class="mt-3"><i class="fas fa-tools text-warning me-2"></i>Skills to Learn</h5>
+                                        <div>
+                                            <span class="badge-skill">Aerodynamics</span>
+                                            <span class="badge-skill">Composite Materials</span>
+                                            <span class="badge-skill">Propulsion</span>
+                                            <span class="badge-skill">Drone Technology</span>
+                                            <span class="badge-skill">CAD/CAE</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h5><i class="fas fa-clock text-info me-2"></i>Future Trends</h5>
+                                <p class="text-muted">Space tech growing with 200% funding increase, Drone technology expanding, Commercial space flight opening new opportunities.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Personality Assessment Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-smile me-2"></i>Quick Personality Assessment</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #e3f2fd; color: #1976d2;" onclick="filterByPersonality('analytical')">
+                            <i class="fas fa-brain me-2"></i>Analytical Thinker
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #e8f5e8; color: #388e3c;" onclick="filterByPersonality('hands')">
+                            <i class="fas fa-tools me-2"></i>Hands-on Worker
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #fff3e0; color: #f57c00;" onclick="filterByPersonality('creative')">
+                            <i class="fas fa-paint-brush me-2"></i>Creative Designer
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #fce4ec; color: #c2185b;" onclick="filterByPersonality('research')">
+                            <i class="fas fa-microscope me-2"></i>Research Oriented
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #e0f2f1; color: #00796b;" onclick="filterByPersonality('manager')">
+                            <i class="fas fa-users me-2"></i>Project Manager
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #f3e5f5; color: #7b1fa2;" onclick="filterByPersonality('innovator')">
+                            <i class="fas fa-lightbulb me-2"></i>Innovator
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #ffebee; color: #c62828;" onclick="filterByPersonality('leader')">
+                            <i class="fas fa-crown me-2"></i>Leader
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="personality-tag" style="background-color: #e8eaf6; color: #283593;" onclick="filterByPersonality('detail')">
+                            <i class="fas fa-search me-2"></i>Detail-oriented
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Career Tips Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Career Success Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-certificate fa-2x text-warning me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Get Certified</h6>
+                                <small>NPTEL, Coursera certifications boost resume</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-project-diagram fa-2x text-success me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Build Projects</h6>
+                                <small>Hands-on projects showcase skills</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-chart-network fa-2x text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Network</h6>
+                                <small>Connect with industry professionals</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedInterest = null;
+
+function selectInterest(interest) {
+    // Remove selected class from all cards
+    for (let i = 1; i <= 6; i++) {
+        document.getElementById(`interest-${i}`).classList.remove('selected');
+    }
+    
+    // Add selected class to clicked card
+    document.getElementById(`interest-${interest}`).classList.add('selected');
+    
+    // Hide all results
+    for (let i = 1; i <= 6; i++) {
+        document.getElementById(`result-${i}`).style.display = 'none';
+    }
+    
+    // Show selected result
+    document.getElementById(`result-${interest}`).style.display = 'block';
+    
+    // Show results section
+    document.getElementById('results-section').style.display = 'block';
+    
+    // Scroll to results
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function filterByPersonality(type) {
+    let suggestion = '';
+    let interest = 1;
+    
+    switch(type) {
+        case 'analytical':
+            suggestion = 'Computer Science or Electronics';
+            interest = 1;
+            break;
+        case 'hands':
+            suggestion = 'Mechanical or Civil';
+            interest = 2;
+            break;
+        case 'creative':
+            suggestion = 'Civil or Aerospace';
+            interest = 3;
+            break;
+        case 'research':
+            suggestion = 'Chemical or Aerospace';
+            interest = 5;
+            break;
+        case 'innovator':
+            suggestion = 'Computer Science or Aerospace';
+            interest = 6;
+            break;
+        default:
+            suggestion = 'Explore all branches';
+            interest = 1;
+    }
+    
+    // Show toast notification
+    alert(`Based on your personality, we recommend: ${suggestion}`);
+    
+    // Select the suggested branch
+    selectInterest(interest);
+}
+
+// Auto-select first interest on page load (optional)
+window.onload = function() {
+    // Uncomment below if you want auto-selection
+    // selectInterest(1);
+};
+</script>
+
+<!-- Add custom styles for purple color -->
+<style>
+    .bg-purple {
+        background-color: #9b59b6 !important;
+    }
+    .text-purple {
+        color: #9b59b6 !important;
+    }
+    .border-purple {
+        border-color: #9b59b6 !important;
+    }
+</style>
+{% endblock %}

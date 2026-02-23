@@ -1,0 +1,124 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Placement Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="text-center">📊 Placement Rate Analysis</h1>
+        <p class="lead text-center">Compare 2024 placement rates with 2026 predictions</p>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <canvas id="placementChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📈 Placement Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Branch</th>
+                                <th>2024 Placement</th>
+                                <th>2026 Prediction</th>
+                                <th>Growth</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for branch in branches %}
+                            <tr>
+                                <td>{{ branch.name }} {{ branch.icon }}</td>
+                                <td>{{ branch.placement_2024 }}%</td>
+                                <td>{{ branch.placement_2026 }}%</td>
+                                <td class="{% if branch.placement_growth > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% if branch.placement_growth > 0 %}📈{% else %}📉{% endif %} 
+                                    {{ branch.placement_growth|stringformat:"+d" }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('placementChart').getContext('2d');
+    
+    const branches = [
+        {% for branch in branches %}
+            '{{ branch.name }}'{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    const placement2024 = [
+        {% for branch in branches %}
+            {{ branch.placement_2024 }}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    const placement2026 = [
+        {% for branch in branches %}
+            {{ branch.placement_2026 }}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: branches,
+            datasets: [
+                {
+                    label: '2024 Placement',
+                    data: placement2024,
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: '2026 Prediction',
+                    data: placement2026,
+                    backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                    borderColor: 'rgba(231, 76, 60, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Placement Rates: 2024 vs 2026'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

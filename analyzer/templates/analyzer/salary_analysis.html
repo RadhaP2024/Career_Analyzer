@@ -1,0 +1,171 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Salary Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="text-center">💰 Salary Analysis 2024</h1>
+        <p class="lead text-center">Average salary packages for engineering branches</p>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <canvas id="salaryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">💰 Salary Breakdown</h5>
+            </div>
+            <div class="card-body">
+                {% for branch in branches %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>{{ branch.name }} {{ branch.icon }}</span>
+                        <span class="fw-bold">₹{{ branch.salary_2024 }} LPA</span>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {% widthratio branch.salary_2024 max_salary 100 %}%;" 
+                             aria-valuenow="{{ branch.salary_2024 }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="{{ max_salary }}">
+                            ₹{{ branch.salary_2024 }} LPA
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">🏆 Top Paying Branches</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% with top_salaries=branches|dictsortreversed:"salary_2024" %}
+                        {% for branch in top_salaries|slice:":3" %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ branch.name }}
+                            <span class="badge bg-success rounded-pill">₹{{ branch.salary_2024 }} LPA</span>
+                        </li>
+                        {% endfor %}
+                    {% endwith %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📊 Salary Range</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Highest Salary
+                        <span class="badge bg-primary rounded-pill">
+                            {% with max_salary=branches|dictsortreversed:"salary_2024"|first %}
+                                ₹{{ max_salary.salary_2024 }} LPA ({{ max_salary.name }})
+                            {% endwith %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Lowest Salary
+                        <span class="badge bg-secondary rounded-pill">
+                            {% with min_salary=branches|dictsort:"salary_2024"|first %}
+                                ₹{{ min_salary.salary_2024 }} LPA ({{ min_salary.name }})
+                            {% endwith %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the canvas element
+    const ctx = document.getElementById('salaryChart').getContext('2d');
+    
+    // Create arrays from Django template - FIXED SYNTAX
+    const branches = [
+        {% for branch in branches %}
+            '{{ branch.name }}'{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    const salaries = [
+        {% for branch in branches %}
+            {{ branch.salary_2024 }}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    // Colors for the bars
+    const colors = [
+        'rgba(46, 204, 113, 0.7)',
+        'rgba(52, 152, 219, 0.7)',
+        'rgba(155, 89, 182, 0.7)',
+        'rgba(230, 126, 34, 0.7)',
+        'rgba(26, 188, 156, 0.7)',
+        'rgba(231, 76, 60, 0.7)'
+    ];
+    
+    // Create the chart
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: branches,
+            datasets: [{
+                label: 'Salary (LPA)',
+                data: salaries,
+                backgroundColor: colors.slice(0, branches.length),
+                borderColor: 'rgba(0, 0, 0, 0.1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Average Salary Package by Branch (2024)'
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Salary (Lakhs per Annum)'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

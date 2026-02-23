@@ -1,0 +1,184 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}AI Career Guide{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 text-center mb-4">
+        <h1><i class="fas fa-robot"></i> AI Career Guidance Chatbot</h1>
+        <p class="lead">Ask me about engineering careers, placements, salaries, courses, and projects!</p>
+        <hr>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-comment-dots"></i> Chat with AI Assistant
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="bot-message">
+                        <strong>🤖 AI Assistant:</strong> 
+                        Hello! I'm your engineering career assistant. I can help you with:
+                        <ul class="mb-0 mt-2">
+                            <li>Placement rates and trends</li>
+                            <li>Salary information</li>
+                            <li>Branch details and comparisons</li>
+                            <li>Course recommendations</li>
+                            <li>Project ideas</li>
+                        </ul>
+                        <small class="text-muted">Try asking: "placement rates", "salaries", "courses for CS", or "compare Mechanical and Civil"</small>
+                    </div>
+                </div>
+                
+                <div class="input-group mt-3">
+                    <input type="text" class="form-control" id="userInput" 
+                           placeholder="Type your question..." 
+                           onkeypress="if(event.key === 'Enter') sendMessage()">
+                    <button class="btn btn-primary" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+                
+                <div class="mt-2">
+                    <small class="text-muted">
+                        Quick questions: 
+                        <a href="#" onclick="setInput('placement rates')">📊 Placement</a> | 
+                        <a href="#" onclick="setInput('salaries')">💰 Salaries</a> | 
+                        <a href="#" onclick="setInput('future trends')">🔮 Trends</a> | 
+                        <a href="#" onclick="setInput('courses for Computer Science')">🎓 CS Courses</a> | 
+                        <a href="#" onclick="setInput('projects for Mechanical')">🔧 ME Projects</a> | 
+                        <a href="#" onclick="setInput('help')">❓ Help</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Popular Courses</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Machine Learning (Coursera)</li>
+                    <li class="list-group-item">Programming in Java (NPTEL)</li>
+                    <li class="list-group-item">Electric Vehicles (NPTEL)</li>
+                    <li class="list-group-item">VLSI Design (NPTEL)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-tools"></i> Trending Projects</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">AI Chatbot with Python</li>
+                    <li class="list-group-item">Electric Vehicle Kit</li>
+                    <li class="list-group-item">IoT Home Automation</li>
+                    <li class="list-group-item">Drone with GPS</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Fast Facts</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">CS Placement: 88%</li>
+                    <li class="list-group-item">Highest Salary: ₹9.2 LPA</li>
+                    <li class="list-group-item">Fastest Growth: CS (+3%)</li>
+                    <li class="list-group-item">EV Sector: +40% growth</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function setInput(text) {
+        document.getElementById('userInput').value = text;
+        sendMessage();
+    }
+    
+    function sendMessage() {
+        const input = document.getElementById('userInput');
+        const message = input.value.trim();
+        
+        if (message === '') return;
+        
+        // Add user message
+        addMessage(message, 'user');
+        input.value = '';
+        
+        // Show typing indicator
+        showTypingIndicator();
+        
+        // Send to API
+        fetch('{% url "chatbot_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            removeTypingIndicator();
+            addMessage(data.response, 'bot');
+        })
+        .catch(error => {
+            removeTypingIndicator();
+            addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+        });
+    }
+    
+    function addMessage(text, sender) {
+        const chat = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = sender === 'bot' ? 'bot-message' : 'user-message';
+        
+        if (sender === 'bot') {
+            messageDiv.innerHTML = `<strong>🤖 AI Assistant:</strong> ${text.replace(/\n/g, '<br>')}`;
+        } else {
+            messageDiv.innerHTML = `<strong>You:</strong> ${text}`;
+        }
+        
+        chat.appendChild(messageDiv);
+        chat.scrollTop = chat.scrollHeight;
+    }
+    
+    function showTypingIndicator() {
+        const chat = document.getElementById('chatMessages');
+        const indicator = document.createElement('div');
+        indicator.id = 'typing-indicator';
+        indicator.className = 'bot-message';
+        indicator.innerHTML = '<strong>🤖 AI Assistant:</strong> <i class="fas fa-circle-notch fa-spin"></i> Typing...';
+        chat.appendChild(indicator);
+        chat.scrollTop = chat.scrollHeight;
+    }
+    
+    function removeTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+    }
+</script>
+{% endblock %}

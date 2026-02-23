@@ -1,0 +1,20 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}All Branches{% endblock %}
+
+{% block content %}
+<h1>All Engineering Branches</h1>
+<div class="row">
+    {% for branch in branches %}
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ branch.name }} {{ branch.icon }}</h5>
+                <p class="card-text">Placement: {{ branch.placement_2024 }}% | Salary: ₹{{ branch.salary_2024 }} LPA</p>
+                <a href="{% url 'branch_detail' branch.id %}" class="btn btn-primary">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

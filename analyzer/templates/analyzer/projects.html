@@ -1,0 +1,1476 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Project Recommendations{% endblock %}
+
+{% block content %}
+<style>
+    .project-card {
+        transition: all 0.3s;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        height: 100%;
+        position: relative;
+    }
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+    .project-image {
+        height: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+        position: relative;
+    }
+    .difficulty-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        z-index: 2;
+    }
+    .easy-badge { background-color: #28a745; color: white; }
+    .medium-badge { background-color: #ffc107; color: black; }
+    .hard-badge { background-color: #dc3545; color: white; }
+    
+    .branch-tab {
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+    }
+    .branch-tab:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .branch-tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .branch-tab.active .branch-icon {
+        color: white;
+    }
+    .branch-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .tech-tag {
+        background-color: #e9ecef;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 2px;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+    .tech-tag:hover {
+        background-color: #007bff;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .duration-badge {
+        background-color: #6c757d;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+    
+    .guide-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+    
+    .project-stats {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h1 class="display-4">🔧 Project Recommendations</h1>
+        <p class="lead">Hands-on projects to boost your engineering portfolio</p>
+        <hr>
+    </div>
+</div>
+
+<!-- Branch Selection Tabs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3"><i class="fas fa-code-branch me-2"></i>Select Your Branch</h4>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab active" onclick="filterByBranch('cs')" id="tab-cs">
+            <div class="branch-icon">💻</div>
+            <div class="fw-bold">CS</div>
+            <small>Computer Science</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('me')" id="tab-me">
+            <div class="branch-icon">🔧</div>
+            <div class="fw-bold">ME</div>
+            <small>Mechanical</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ce')" id="tab-ce">
+            <div class="branch-icon">🏗️</div>
+            <div class="fw-bold">CE</div>
+            <small>Civil</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ec')" id="tab-ec">
+            <div class="branch-icon">📱</div>
+            <div class="fw-bold">EC</div>
+            <small>Electronics</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ch')" id="tab-ch">
+            <div class="branch-icon">⚗️</div>
+            <div class="fw-bold">CH</div>
+            <small>Chemical</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ae')" id="tab-ae">
+            <div class="branch-icon">✈️</div>
+            <div class="fw-bold">AE</div>
+            <small>Aerospace</small>
+        </div>
+    </div>
+</div>
+
+<!-- Difficulty Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filter by Difficulty</h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-success active" onclick="filterByDifficulty('all')" id="filter-all">All</button>
+                    <button class="btn btn-outline-success" onclick="filterByDifficulty('easy')" id="filter-easy">Easy</button>
+                    <button class="btn btn-outline-warning" onclick="filterByDifficulty('medium')" id="filter-medium">Medium</button>
+                    <button class="btn btn-outline-danger" onclick="filterByDifficulty('hard')" id="filter-hard">Hard</button>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="hasGuide" onchange="toggleGuide()">
+                        <label class="form-check-label" for="hasGuide">Show only projects with guides</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="teamProjects" onchange="toggleTeam()">
+                        <label class="form-check-label" for="teamProjects">Team projects only</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Computer Science Projects -->
+<div id="projects-cs" class="branch-projects">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-primary">💻 Computer Science Projects</h2>
+            <p class="text-muted">Software development, AI, and web projects</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Project 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">AI Chatbot with Python & NLP</h5>
+                    <p class="card-text text-muted">Build an intelligent chatbot using Natural Language Processing and machine learning.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">4-6 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">1-2 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">NLTK</span>
+                        <span class="tech-tag">TensorFlow</span>
+                        <span class="tech-tag">Flask</span>
+                        <span class="tech-tag">NLP</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-primary" onclick="showProjectDetails('chatbot')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="easy" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <span class="difficulty-badge easy-badge">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">E-commerce Website</h5>
+                    <p class="card-text text-muted">Full-stack e-commerce platform with product catalog, cart, and payment integration.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">6-8 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">2-3 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-success">Beginner</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Node.js</span>
+                        <span class="tech-tag">MongoDB</span>
+                        <span class="tech-tag">Express</span>
+                        <span class="tech-tag">Stripe</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-primary" onclick="showProjectDetails('ecommerce')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Stock Price Prediction Model</h5>
+                    <p class="card-text text-muted">Machine learning model to predict stock prices using LSTM and technical indicators.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">8-10 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">2-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">TensorFlow</span>
+                        <span class="tech-tag">Keras</span>
+                        <span class="tech-tag">LSTM</span>
+                        <span class="tech-tag">Pandas</span>
+                        <span class="tech-tag">yFinance</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-primary" onclick="showProjectDetails('stock')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 4 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="false" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #6f42c1 0%, #6610f2 100%);">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Mobile App with Flutter</h5>
+                    <p class="card-text text-muted">Cross-platform mobile app for task management with Firebase backend.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">6-8 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">1-2 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Flutter</span>
+                        <span class="tech-tag">Dart</span>
+                        <span class="tech-tag">Firebase</span>
+                        <span class="tech-tag">REST API</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-secondary"><i class="fas fa-video me-1"></i>No Guide</span>
+                        <button class="btn btn-sm btn-primary" onclick="showProjectDetails('flutter')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 5 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #fd7e14 0%, #dc3545 100%);">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Blockchain-based Voting System</h5>
+                    <p class="card-text text-muted">Secure and transparent voting system using Ethereum smart contracts.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">10-12 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">3-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Solidity</span>
+                        <span class="tech-tag">Ethereum</span>
+                        <span class="tech-tag">Web3.js</span>
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Truffle</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-primary" onclick="showProjectDetails('blockchain')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 6 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #20c997 0%, #0dcaf0 100%);">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Cybersecurity Threat Detection</h5>
+                    <p class="card-text text-muted">Network intrusion detection system using machine learning.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">6-8 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">2-3 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Scikit-learn</span>
+                        <span class="tech-tag">Wireshark</span>
+                        <span class="tech-tag">KDD Dataset</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-primary" onclick="showProjectDetails('cyber')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mechanical Engineering Projects -->
+<div id="projects-me" class="branch-projects" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-success">🔧 Mechanical Engineering Projects</h2>
+            <p class="text-muted">Hands-on mechanical design and manufacturing projects</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Project 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Electric Vehicle Conversion Kit</h5>
+                    <p class="card-text text-muted">Convert a conventional vehicle to electric with motor, controller, and battery pack.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">3-4 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">4-5 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">BLDC Motor</span>
+                        <span class="tech-tag">Controller</span>
+                        <span class="tech-tag">Li-ion Battery</span>
+                        <span class="tech-tag">CAD</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-success" onclick="showProjectDetails('evkit')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);">
+                        <i class="fas fa-hand-paper"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">3D Printed Prosthetic Hand</h5>
+                    <p class="card-text text-muted">Design and print a functional prosthetic hand with cable-driven fingers.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">6-8 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">2-3 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">3D Printing</span>
+                        <span class="tech-tag">CAD</span>
+                        <span class="tech-tag">Fusion 360</span>
+                        <span class="tech-tag">PLA/ABS</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-success" onclick="showProjectDetails('prosthetic')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #17a2b8 0%, #0dcaf0 100%);">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Automated Solar Panel Cleaner</h5>
+                    <p class="card-text text-muted">Robotic system to clean solar panels automatically.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">2-3 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">3-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Arduino</span>
+                        <span class="tech-tag">Sensors</span>
+                        <span class="tech-tag">DC Motors</span>
+                        <span class="tech-tag">Mechanical Design</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-success" onclick="showProjectDetails('solar')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 4 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="false" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #6f42c1 0%, #6610f2 100%);">
+                        <i class="fas fa-plane"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">RC Aircraft with FPV System</h5>
+                    <p class="card-text text-muted">Design and build a remote-controlled aircraft with first-person view.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">3-4 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">4-5 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Aerodynamics</span>
+                        <span class="tech-tag">Brushless Motor</span>
+                        <span class="tech-tag">FPV Camera</span>
+                        <span class="tech-tag">Transmitter</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-secondary"><i class="fas fa-video me-1"></i>No Guide</span>
+                        <button class="btn btn-sm btn-success" onclick="showProjectDetails('rc')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Civil Engineering Projects -->
+<div id="projects-ce" class="branch-projects" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-warning">🏗️ Civil Engineering Projects</h2>
+            <p class="text-muted">Structural design, construction, and infrastructure projects</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Project 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">BIM Model for Smart Building</h5>
+                    <p class="card-text text-muted">Create a detailed Building Information Model for a smart commercial building.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">2-3 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">3-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Revit</span>
+                        <span class="tech-tag">AutoCAD</span>
+                        <span class="tech-tag">Navisworks</span>
+                        <span class="tech-tag">BIM 360</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-warning" onclick="showProjectDetails('bim')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+                        <i class="fas fa-house-damage"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Earthquake Resistant Structure Design</h5>
+                    <p class="card-text text-muted">Design and analyze a building structure with seismic resistance.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">2-3 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">3-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">STAAD Pro</span>
+                        <span class="tech-tag">ETABS</span>
+                        <span class="tech-tag">Seismic Analysis</span>
+                        <span class="tech-tag">Base Isolation</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-warning" onclick="showProjectDetails('earthquake')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="easy" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <span class="difficulty-badge easy-badge">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Green Building with Sustainable Materials</h5>
+                    <p class="card-text text-muted">Design an eco-friendly building using sustainable materials.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">4-6 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">2-3 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-success">Beginner</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">AutoCAD</span>
+                        <span class="tech-tag">Sustainable Materials</span>
+                        <span class="tech-tag">Energy Efficiency</span>
+                        <span class="tech-tag">LEED</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-warning" onclick="showProjectDetails('green')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Electronics Engineering Projects -->
+<div id="projects-ec" class="branch-projects" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-danger">📱 Electronics Engineering Projects</h2>
+            <p class="text-muted">Circuit design, embedded systems, and IoT projects</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Project 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="easy" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #17a2b8 0%, #0dcaf0 100%);">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="difficulty-badge easy-badge">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">IoT-based Home Automation System</h5>
+                    <p class="card-text text-muted">Control home appliances remotely using smartphone and IoT.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">4-6 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">2-3 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-success">Beginner</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">ESP8266</span>
+                        <span class="tech-tag">Arduino</span>
+                        <span class="tech-tag">Relay Module</span>
+                        <span class="tech-tag">Blynk App</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-danger" onclick="showProjectDetails('iot')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="easy" data-guide="true" data-team="false">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <span class="difficulty-badge easy-badge">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Arduino-based Weather Station</h5>
+                    <p class="card-text text-muted">Monitor temperature, humidity, and pressure with display.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">3-4 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">1-2 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-success">Beginner</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Arduino</span>
+                        <span class="tech-tag">DHT11</span>
+                        <span class="tech-tag">BMP180</span>
+                        <span class="tech-tag">LCD Display</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-danger" onclick="showProjectDetails('weather')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #dc3545 0%, #6f42c1 100%);">
+                        <i class="fas fa-drone"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Drone with GPS Navigation</h5>
+                    <p class="card-text text-muted">Build a quadcopter with autonomous GPS navigation.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">3-4 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">4-5 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">ArduPilot</span>
+                        <span class="tech-tag">GPS</span>
+                        <span class="tech-tag">Brushless Motors</span>
+                        <span class="tech-tag">Flight Controller</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-danger" onclick="showProjectDetails('drone')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chemical Engineering Projects -->
+<div id="projects-ch" class="branch-projects" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-purple">⚗️ Chemical Engineering Projects</h2>
+            <p class="text-muted">Process design, green chemistry, and materials projects</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Project 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <i class="fas fa-oil-can"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Biodiesel Production from Waste Oil</h5>
+                    <p class="card-text text-muted">Produce biodiesel from used cooking oil through transesterification.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">6-8 weeks</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">3-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Transesterification</span>
+                        <span class="tech-tag">Catalyst</span>
+                        <span class="tech-tag">Reactor Design</span>
+                        <span class="tech-tag">GC Analysis</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-purple" onclick="showProjectDetails('biodiesel')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="medium" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #17a2b8 0%, #0dcaf0 100%);">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <span class="difficulty-badge medium-badge">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Water Purification System Design</h5>
+                    <p class="card-text text-muted">Design and build a multi-stage water purification system.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">2-3 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">3-4 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-warning">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">Filtration</span>
+                        <span class="tech-tag">RO Membrane</span>
+                        <span class="tech-tag">UV Treatment</span>
+                        <span class="tech-tag">Water Testing</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-purple" onclick="showProjectDetails('water')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aerospace Engineering Projects -->
+<div id="projects-ae" class="branch-projects" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-info">✈️ Aerospace Engineering Projects</h2>
+            <p class="text-muted">Aircraft design, propulsion, and space technology projects</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Project 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #6f42c1 0%, #6610f2 100%);">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Rocket Propulsion System Design</h5>
+                    <p class="card-text text-muted">Design and simulate a liquid-fuel rocket propulsion system.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">3-4 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">4-5 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">CFD</span>
+                        <span class="tech-tag">Propulsion</span>
+                        <span class="tech-tag">Thermodynamics</span>
+                        <span class="tech-tag">MATLAB</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-info" onclick="showProjectDetails('rocket')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 project-item" data-difficulty="hard" data-guide="true" data-team="true">
+            <div class="project-card">
+                <div class="position-relative">
+                    <div class="project-image" style="background: linear-gradient(135deg, #20c997 0%, #0dcaf0 100%);">
+                        <i class="fas fa-satellite"></i>
+                    </div>
+                    <span class="difficulty-badge hard-badge">Hard</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Satellite Communication System</h5>
+                    <p class="card-text text-muted">Design a small satellite communication system for data transmission.</p>
+                    
+                    <div class="project-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="far fa-clock me-1"></i>Duration</span>
+                            <span class="fw-bold">3-4 months</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-users me-1"></i>Team Size</span>
+                            <span class="fw-bold">4-5 people</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-star me-1"></i>Difficulty</span>
+                            <span class="fw-bold text-danger">Advanced</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Technologies:</h6>
+                        <span class="tech-tag">RF Design</span>
+                        <span class="tech-tag">Antenna</span>
+                        <span class="tech-tag">SDR</span>
+                        <span class="tech-tag">Orbit Analysis</span>
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i>Guide Available</span>
+                        <button class="btn btn-sm btn-info" onclick="showProjectDetails('satellite')">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Tips Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4 class="mb-4"><i class="fas fa-lightbulb text-warning me-2"></i>Project Success Tips</h4>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="feature-icon me-3">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div>
+                                <h6>Plan Thoroughly</h6>
+                                <p class="text-muted small">Break down project into phases with clear milestones</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="feature-icon me-3">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <h6>Team Collaboration</h6>
+                                <p class="text-muted small">Use Git/GitHub for version control and task tracking</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="feature-icon me-3">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div>
+                                <h6>Document Everything</h6>
+                                <p class="text-muted small">Maintain detailed documentation for future reference</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Modal -->
+<div class="modal fade" id="projectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="projectModalTitle">Project Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="projectModalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentBranch = 'cs';
+let currentDifficulty = 'all';
+let guideOnly = false;
+let teamOnly = false;
+
+function filterByBranch(branch) {
+    // Update active tab
+    document.querySelectorAll('.branch-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(`tab-${branch}`).classList.add('active');
+    
+    // Hide all branch sections
+    document.querySelectorAll('.branch-projects').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show selected branch
+    document.getElementById(`projects-${branch}`).style.display = 'block';
+    currentBranch = branch;
+    
+    // Apply current filters
+    applyFilters();
+}
+
+function filterByDifficulty(difficulty) {
+    // Update active filter
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`filter-${difficulty}`).classList.add('active');
+    
+    currentDifficulty = difficulty;
+    applyFilters();
+}
+
+function toggleGuide() {
+    guideOnly = document.getElementById('hasGuide').checked;
+    applyFilters();
+}
+
+function toggleTeam() {
+    teamOnly = document.getElementById('teamProjects').checked;
+    applyFilters();
+}
+
+function applyFilters() {
+    const projects = document.querySelectorAll(`#projects-${currentBranch} .project-item`);
+    
+    projects.forEach(project => {
+        let show = true;
+        
+        // Difficulty filter
+        if (currentDifficulty !== 'all' && project.dataset.difficulty !== currentDifficulty) {
+            show = false;
+        }
+        
+        // Guide filter
+        if (guideOnly && project.dataset.guide !== 'true') {
+            show = false;
+        }
+        
+        // Team filter
+        if (teamOnly && project.dataset.team !== 'true') {
+            show = false;
+        }
+        
+        project.style.display = show ? 'block' : 'none';
+    });
+}
+
+function showProjectDetails(projectId) {
+    const modal = new bootstrap.Modal(document.getElementById('projectModal'));
+    
+    // Project details mapping
+    const details = {
+        'chatbot': {
+            title: 'AI Chatbot with Python & NLP',
+            description: 'Build an intelligent chatbot using Natural Language Processing and machine learning.',
+            objectives: [
+                'Understand NLP fundamentals',
+                'Implement intent classification',
+                'Build conversation flow',
+                'Deploy as web application'
+            ],
+            steps: [
+                'Set up Python environment with NLTK and TensorFlow',
+                'Collect and preprocess training data',
+                'Train intent classification model',
+                'Implement response generation',
+                'Create Flask web interface',
+                'Test and deploy'
+            ],
+            resources: [
+                'NLTK Documentation',
+                'TensorFlow Tutorials',
+                'Flask Web Framework Guide'
+            ],
+            github: 'https://github.com/example/chatbot-project',
+            demo: 'https://chatbot-demo.example.com'
+        },
+        'ecommerce': {
+            title: 'E-commerce Website',
+            description: 'Full-stack e-commerce platform with product catalog, cart, and payment integration.',
+            objectives: [
+                'Build responsive frontend',
+                'Implement user authentication',
+                'Create product management system',
+                'Integrate payment gateway'
+            ],
+            steps: [
+                'Design database schema',
+                'Create React components',
+                'Build Node.js/Express API',
+                'Implement JWT authentication',
+                'Add shopping cart functionality',
+                'Integrate Stripe payments',
+                'Deploy on cloud platform'
+            ],
+            resources: [
+                'React Documentation',
+                'Node.js Tutorial',
+                'MongoDB University',
+                'Stripe API Docs'
+            ],
+            github: 'https://github.com/example/ecommerce-project'
+        },
+        'stock': {
+            title: 'Stock Price Prediction Model',
+            description: 'Machine learning model to predict stock prices using LSTM neural networks.',
+            objectives: [
+                'Understand time series analysis',
+                'Implement LSTM networks',
+                'Feature engineering for stocks',
+                'Evaluate model performance'
+            ],
+            steps: [
+                'Collect historical stock data',
+                'Preprocess and normalize data',
+                'Create sequences for LSTM',
+                'Build and train LSTM model',
+                'Evaluate predictions',
+                'Create visualization dashboard'
+            ],
+            resources: [
+                'TensorFlow Time Series Guide',
+                'LSTM Tutorial',
+                'yFinance Library Docs',
+                'Stock Market Analysis Books'
+            ],
+            github: 'https://github.com/example/stock-prediction'
+        },
+        'evkit': {
+            title: 'Electric Vehicle Conversion Kit',
+            description: 'Convert a conventional vehicle to electric with motor, controller, and battery pack.',
+            objectives: [
+                'Understand EV powertrain',
+                'Select appropriate components',
+                'Design mounting systems',
+                'Implement safety features'
+            ],
+            steps: [
+                'Select donor vehicle',
+                'Choose motor and controller',
+                'Design battery pack',
+                'Create mounting brackets',
+                'Install cooling system',
+                'Wire electrical system',
+                'Test and validate'
+            ],
+            resources: [
+                'OpenInverter Project',
+                'EV Conversion Forums',
+                'Battery Management Systems Guide'
+            ]
+        }
+    };
+    
+    const project = details[projectId] || {
+        title: 'Project Details',
+        description: 'Information not available',
+        objectives: ['Objective 1', 'Objective 2', 'Objective 3'],
+        steps: ['Step 1', 'Step 2', 'Step 3', 'Step 4'],
+        resources: ['Resource 1', 'Resource 2', 'Resource 3']
+    };
+    
+    let objectivesHtml = '';
+    project.objectives.forEach(item => {
+        objectivesHtml += `<li><i class="fas fa-check-circle text-success me-2"></i>${item}</li>`;
+    });
+    
+    let stepsHtml = '';
+    project.steps.forEach((item, index) => {
+        stepsHtml += `<li class="mb-2"><span class="badge bg-primary me-2">${index + 1}</span>${item}</li>`;
+    });
+    
+    let resourcesHtml = '';
+    project.resources.forEach(item => {
+        resourcesHtml += `<span class="tech-tag me-2 mb-2">${item}</span>`;
+    });
+    
+    let githubLink = project.github ? `<a href="${project.github}" class="btn btn-dark me-2" target="_blank"><i class="fab fa-github me-2"></i>GitHub</a>` : '';
+    let demoLink = project.demo ? `<a href="${project.demo}" class="btn btn-success" target="_blank"><i class="fas fa-external-link-alt me-2"></i>Live Demo</a>` : '';
+    
+    document.getElementById('projectModalBody').innerHTML = `
+        <h6 class="text-primary mb-3">${project.title}</h6>
+        <p class="mb-4">${project.description}</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="mb-3"><i class="fas fa-bullseye text-danger me-2"></i>Learning Objectives</h6>
+                <ul class="list-unstyled">${objectivesHtml}</ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="mb-3"><i class="fas fa-list-ol text-info me-2"></i>Implementation Steps</h6>
+                <ol class="ps-3">${stepsHtml}</ol>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h6 class="mb-3"><i class="fas fa-book text-warning me-2"></i>Resources</h6>
+            <div>${resourcesHtml}</div>
+        </div>
+        
+        <div class="guide-card mt-4">
+            <h6><i class="fas fa-video me-2"></i>Project Guide</h6>
+            <p class="mb-2">Complete step-by-step video tutorial and documentation available.</p>
+            <div class="progress mb-2" style="height: 10px;">
+                <div class="progress-bar bg-success" style="width: 75%"></div>
+            </div>
+            <small class="text-muted">75% of students complete this project successfully</small>
+        </div>
+        
+        <div class="mt-4 text-center">
+            ${githubLink}
+            ${demoLink}
+        </div>
+    `;
+    
+    modal.show();
+}
+
+// Add purple button style
+const style = document.createElement('style');
+style.innerHTML = `
+    .btn-purple {
+        background-color: #9b59b6;
+        border-color: #9b59b6;
+        color: white;
+    }
+    .btn-purple:hover {
+        background-color: #8e44ad;
+        border-color: #8e44ad;
+        color: white;
+    }
+    .text-purple {
+        color: #9b59b6 !important;
+    }
+    .bg-purple {
+        background-color: #9b59b6 !important;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Home - Engineering Career Analyzer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 text-center mb-4">
+        <h1 class="display-4">🚀 Engineering Career Trend Analyzer</h1>
+        <p class="lead">Analyze engineering career trends using real data!</p>
+        <hr class="my-4">
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Placement Analysis</h5>
+                <p class="card-text">Compare 2024 placement rates with 2026 predictions across all branches.</p>
+                <a href="{% url 'placement' %}" class="btn btn-primary">View Analysis</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-rupee-sign fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Salary Insights</h5>
+                <p class="card-text">Check average salary packages for different engineering branches.</p>
+                <a href="{% url 'salary' %}" class="btn btn-success">View Salaries</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-robot fa-3x text-info mb-3"></i>
+                <h5 class="card-title">AI Career Guide</h5>
+                <p class="card-text">Chat with our AI assistant for personalized guidance.</p>
+                <a href="{% url 'chatbot' %}" class="btn btn-info text-white">Start Chat</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">🔥 Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Branches Analyzed
+                        <span class="badge bg-primary rounded-pill">{{ total_branches }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Highest Placement (2024)
+                        <span class="badge bg-success rounded-pill">
+                            {% if branches %}
+                                {% with max_placement=branches|dictsortreversed:"placement_2024"|first %}
+                                    {{ max_placement.placement_2024 }}% ({{ max_placement.name }})
+                                {% endwith %}
+                            {% else %}
+                                88% (CS)
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Highest Salary
+                        <span class="badge bg-info rounded-pill">
+                            {% if branches %}
+                                {% with max_salary=branches|dictsortreversed:"salary_2024"|first %}
+                                    ₹{{ max_salary.salary_2024 }} LPA ({{ max_salary.name }})
+                                {% endwith %}
+                            {% else %}
+                                ₹9.2 LPA (CS)
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Fastest Growing
+                        <span class="badge bg-warning rounded-pill">
+                            {% if branches %}
+                                {% with max_growth=branches|dictsortreversed:"placement_growth"|first %}
+                                    {{ max_growth.name }} (+{{ max_growth.placement_growth }}%)
+                                {% endwith %}
+                            {% else %}
+                                CS (+3%)
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📋 Available Branches</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for branch in branches %}
+                    <div class="col-6 mb-2">
+                        <i class="fas fa-check-circle text-success"></i> 
+                        <a href="{% url 'branch_detail' branch.id %}" class="text-decoration-none">
+                            {{ branch.name }} {{ branch.icon }}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'all_branches' %}" class="btn btn-outline-primary mt-3">View All Branches</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Note:</strong> This program uses real 2024 placement data and 2026 predictions from industry reports.
+            Made with Python and Django - Interactive charts and AI chatbot included!
+        </div>
+    </div>
+</div>
+{% endblock %}

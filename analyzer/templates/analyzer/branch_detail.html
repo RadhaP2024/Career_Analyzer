@@ -1,0 +1,163 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}{{ branch.name }} Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>{{ branch.name }} Engineering {{ branch.icon }}</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📊 Placement Data</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>2024 Placement:</strong> {{ branch.placement_2024 }}%</p>
+                <p><strong>2026 Prediction:</strong> {{ branch.placement_2026 }}%</p>
+                <p><strong>Growth:</strong> <span class="{% if branch.placement_growth > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ branch.placement_growth|stringformat:"+d" }}%</span></p>
+           {% extends 'analyzer/base.html' %}
+
+{% block title %}{{ branch.name }} Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>{{ branch.name }} Engineering {{ branch.icon }}</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📊 Placement Data</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>2024 Placement:</strong> {{ branch.placement_2024 }}%</p>
+                <p><strong>2026 Prediction:</strong> {{ branch.placement_2026 }}%</p>
+                <p><strong>Growth:</strong> <span class="{% if branch.placement_growth > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ branch.placement_growth|stringformat:"+d" }}%</span></p>
+                <p><strong>Salary:</strong> ₹{{ branch.salary_2024 }} LPA</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🔮 Future Trends</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ branch.future_trends }}</p>
+                <h6>Key Skills:</h6>
+                <p>{{ branch.future_skills }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-{% if branch.placement_2024 >= 80 %}success{% elif branch.placement_2024 >= 70 %}warning{% else %}info{% endif %}">
+            <strong>Verdict:</strong> {{ verdict }}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">🏢 Top Companies</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for company in companies %}
+                    <li class="list-group-item">{{ company.name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">🎓 Recommended Courses</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for course in courses %}
+                    <li class="list-group-item">{{ course.name }} ({{ course.platform }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}     <p><strong>Salary:</strong> ₹{{ branch.salary_2024 }} LPA</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🔮 Future Trends</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ branch.future_trends }}</p>
+                <h6>Key Skills:</h6>
+                <p>{{ branch.future_skills }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-{% if branch.placement_2024 >= 80 %}success{% elif branch.placement_2024 >= 70 %}warning{% else %}info{% endif %}">
+            <strong>Verdict:</strong> {{ verdict }}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">🏢 Top Companies</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for company in companies %}
+                    <li class="list-group-item">{{ company.name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">🎓 Recommended Courses</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for course in courses %}
+                    <li class="list-group-item">{{ course.name }} ({{ course.platform }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,705 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Compare Engineering Branches{% endblock %}
+
+{% block content %}
+<style>
+    .comparison-card {
+        transition: transform 0.3s;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .comparison-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+    .winner-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 2rem;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .progress-bar-custom {
+        height: 25px;
+        border-radius: 12px;
+        background-color: #e9ecef;
+        margin-bottom: 15px;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 12px;
+        transition: width 1s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .branch-icon-large {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h1 class="display-4">🔄 Compare Engineering Branches</h1>
+        <p class="lead">Side-by-side comparison of placement rates, salaries, and growth trends</p>
+        <hr>
+    </div>
+</div>
+
+<!-- Branch Selection Cards -->
+<div class="row mb-5">
+    <div class="col-md-6 mb-3">
+        <div class="card comparison-card h-100 border-primary">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0"><i class="fas fa-1-circle me-2"></i>First Branch</h3>
+            </div>
+            <div class="card-body">
+                <select class="form-select form-select-lg mb-3" id="branch1" onchange="updateComparison()">
+                    <option value="cs" selected>💻 Computer Science</option>
+                    <option value="me">🔧 Mechanical</option>
+                    <option value="ce">🏗️ Civil</option>
+                    <option value="ec">📱 Electronics</option>
+                    <option value="ch">⚗️ Chemical</option>
+                    <option value="ae">✈️ Aerospace</option>
+                </select>
+                
+                <div id="branch1-details" class="mt-4">
+                    <!-- Dynamic content will be updated via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card comparison-card h-100 border-success">
+            <div class="card-header bg-success text-white text-center">
+                <h3 class="mb-0"><i class="fas fa-2-circle me-2"></i>Second Branch</h3>
+            </div>
+            <div class="card-body">
+                <select class="form-select form-select-lg mb-3" id="branch2" onchange="updateComparison()">
+                    <option value="me" selected>🔧 Mechanical</option>
+                    <option value="cs">💻 Computer Science</option>
+                    <option value="ce">🏗️ Civil</option>
+                    <option value="ec">📱 Electronics</option>
+                    <option value="ch">⚗️ Chemical</option>
+                    <option value="ae">✈️ Aerospace</option>
+                </select>
+                
+                <div id="branch2-details" class="mt-4">
+                    <!-- Dynamic content will be updated via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Winner Announcement -->
+<div class="row mb-4" id="winner-section" style="display: none;">
+    <div class="col-12">
+        <div class="alert alert-warning text-center winner-alert" style="font-size: 1.5rem;">
+            <i class="fas fa-crown text-warning me-2"></i>
+            <span id="winner-message"></span>
+            <i class="fas fa-crown text-warning ms-2"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Charts Row -->
+<div class="row mb-5">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Placement Rate Comparison</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="placementChart"></canvas>
+                </div>
+                <div id="placement-stats" class="row text-center mt-3">
+                    <!-- Will be updated via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Salary Comparison</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="salaryChart"></canvas>
+                </div>
+                <div id="salary-stats" class="row text-center mt-3">
+                    <!-- Will be updated via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Growth Radar</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-scatter me-2"></i>Growth vs Salary</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="bubbleChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Comparison Table -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>Detailed Comparison</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Metric</th>
+                                <th id="header-branch1">Branch 1</th>
+                                <th id="header-branch2">Branch 2</th>
+                                <th>Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Placement 2024</strong></td>
+                                <td id="val-placement1">88%</td>
+                                <td id="val-placement2">72%</td>
+                                <td id="diff-placement" class="text-success">+16%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Placement 2026</strong></td>
+                                <td id="val-placement2026-1">91%</td>
+                                <td id="val-placement2026-2">75%</td>
+                                <td id="diff-placement2026" class="text-success">+16%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Growth Rate</strong></td>
+                                <td id="val-growth1">+3%</td>
+                                <td id="val-growth2">+3%</td>
+                                <td id="diff-growth" class="text-secondary">0%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Salary (LPA)</strong></td>
+                                <td id="val-salary1">₹9.2L</td>
+                                <td id="val-salary2">₹6.5L</td>
+                                <td id="diff-salary" class="text-success">+₹2.7L</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Future Demand</strong></td>
+                                <td id="val-demand1">Very High</td>
+                                <td id="val-demand2">High</td>
+                                <td id="diff-demand">-</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Difficulty</strong></td>
+                                <td id="val-difficulty1">High</td>
+                                <td id="val-difficulty2">Medium</td>
+                                <td id="diff-difficulty">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hardcoded Branch Data -->
+<script>
+// Hardcoded branch data
+const branchData = {
+    cs: {
+        name: 'Computer Science',
+        icon: '💻',
+        placement2024: 88,
+        placement2026: 91,
+        salary: 9.2,
+        growth: 3,
+        demand: 'Very High',
+        difficulty: 'High',
+        color: '#3498db',
+        skills: ['AI/ML', 'Cloud', 'Cybersecurity', 'Data Science'],
+        companies: ['Google', 'Microsoft', 'Amazon']
+    },
+    me: {
+        name: 'Mechanical',
+        icon: '🔧',
+        placement2024: 72,
+        placement2026: 75,
+        salary: 6.5,
+        growth: 3,
+        demand: 'High',
+        difficulty: 'Medium',
+        color: '#2ecc71',
+        skills: ['CAD/CAM', 'Robotics', 'EV', '3D Printing'],
+        companies: ['TATA Motors', 'Mahindra', 'L&T']
+    },
+    ce: {
+        name: 'Civil',
+        icon: '🏗️',
+        placement2024: 68,
+        placement2026: 70,
+        salary: 5.9,
+        growth: 2,
+        demand: 'Medium',
+        difficulty: 'Medium',
+        color: '#f39c12',
+        skills: ['BIM', 'Project Management', 'Sustainable Materials'],
+        companies: ['L&T Construction', 'Shapoorji', 'GMR']
+    },
+    ec: {
+        name: 'Electronics',
+        icon: '📱',
+        placement2024: 79,
+        placement2026: 82,
+        salary: 7.8,
+        growth: 3,
+        demand: 'High',
+        difficulty: 'High',
+        color: '#e74c3c',
+        skills: ['VLSI', 'Embedded Systems', 'IoT', 'PCB Design'],
+        companies: ['Intel', 'Samsung', 'Qualcomm']
+    },
+    ch: {
+        name: 'Chemical',
+        icon: '⚗️',
+        placement2024: 71,
+        placement2026: 74,
+        salary: 6.8,
+        growth: 3,
+        demand: 'Medium',
+        difficulty: 'High',
+        color: '#9b59b6',
+        skills: ['Process Optimization', 'Green Chemistry', 'Data Analysis'],
+        companies: ['Reliance', 'BASF', 'Shell']
+    },
+    ae: {
+        name: 'Aerospace',
+        icon: '✈️',
+        placement2024: 75,
+        placement2026: 78,
+        salary: 8.1,
+        growth: 3,
+        demand: 'High',
+        difficulty: 'Very High',
+        color: '#1abc9c',
+        skills: ['Aerodynamics', 'Composite Materials', 'Drone Tech'],
+        companies: ['ISRO', 'Boeing', 'SpaceX']
+    }
+};
+
+// Chart instances
+let placementChart, salaryChart, radarChart, bubbleChart;
+
+// Initialize charts
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    updateComparison();
+});
+
+function initializeCharts() {
+    // Placement Chart
+    const ctx1 = document.getElementById('placementChart').getContext('2d');
+    placementChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['2024', '2026'],
+            datasets: [
+                {
+                    label: branchData.cs.name,
+                    data: [branchData.cs.placement2024, branchData.cs.placement2026],
+                    backgroundColor: branchData.cs.color,
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    borderWidth: 1
+                },
+                {
+                    label: branchData.me.name,
+                    data: [branchData.me.placement2024, branchData.me.placement2026],
+                    backgroundColor: branchData.me.color,
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Placement Rate Comparison'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Placement %'
+                    }
+                }
+            }
+        }
+    });
+
+    // Salary Chart
+    const ctx2 = document.getElementById('salaryChart').getContext('2d');
+    salaryChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: ['2024', '2026'],
+            datasets: [
+                {
+                    label: branchData.cs.name,
+                    data: [branchData.cs.salary, branchData.cs.salary * 1.12],
+                    borderColor: branchData.cs.color,
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.1,
+                    fill: false
+                },
+                {
+                    label: branchData.me.name,
+                    data: [branchData.me.salary, branchData.me.salary * 1.12],
+                    borderColor: branchData.me.color,
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    tension: 0.1,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Salary Growth Projection'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Salary (LPA)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Radar Chart
+    const ctx3 = document.getElementById('radarChart').getContext('2d');
+    radarChart = new Chart(ctx3, {
+        type: 'radar',
+        data: {
+            labels: ['Placement', 'Salary', 'Growth', 'Demand', 'Innovation'],
+            datasets: [
+                {
+                    label: branchData.cs.name,
+                    data: [88, 92, 85, 95, 98],
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    borderColor: branchData.cs.color,
+                    pointBackgroundColor: branchData.cs.color
+                },
+                {
+                    label: branchData.me.name,
+                    data: [72, 65, 85, 80, 75],
+                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                    borderColor: branchData.me.color,
+                    pointBackgroundColor: branchData.me.color
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Performance Radar'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Bubble Chart
+    const ctx4 = document.getElementById('bubbleChart').getContext('2d');
+    bubbleChart = new Chart(ctx4, {
+        type: 'bubble',
+        data: {
+            datasets: [
+                {
+                    label: branchData.cs.name,
+                    data: [{ x: 88, y: 9.2, r: 20 }],
+                    backgroundColor: branchData.cs.color,
+                },
+                {
+                    label: branchData.me.name,
+                    data: [{ x: 72, y: 6.5, r: 15 }],
+                    backgroundColor: branchData.me.color,
+                },
+                {
+                    label: branchData.ce.name,
+                    data: [{ x: 68, y: 5.9, r: 12 }],
+                    backgroundColor: branchData.ce.color,
+                },
+                {
+                    label: branchData.ec.name,
+                    data: [{ x: 79, y: 7.8, r: 18 }],
+                    backgroundColor: branchData.ec.color,
+                },
+                {
+                    label: branchData.ch.name,
+                    data: [{ x: 71, y: 6.8, r: 14 }],
+                    backgroundColor: branchData.ch.color,
+                },
+                {
+                    label: branchData.ae.name,
+                    data: [{ x: 75, y: 8.1, r: 16 }],
+                    backgroundColor: branchData.ae.color,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Placement vs Salary (Bubble Size = Growth)'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw.x}% placement, ₹${context.raw.y}L salary`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Placement Rate (%)'
+                    },
+                    min: 60,
+                    max: 90
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Salary (LPA)'
+                    },
+                    min: 5,
+                    max: 10
+                }
+            }
+        }
+    });
+}
+
+function updateComparison() {
+    const branch1Id = document.getElementById('branch1').value;
+    const branch2Id = document.getElementById('branch2').value;
+    
+    const branch1 = branchData[branch1Id];
+    const branch2 = branchData[branch2Id];
+    
+    // Update headers
+    document.getElementById('header-branch1').innerHTML = `${branch1.icon} ${branch1.name}`;
+    document.getElementById('header-branch2').innerHTML = `${branch2.icon} ${branch2.name}`;
+    
+    // Update table values
+    document.getElementById('val-placement1').innerHTML = branch1.placement2024 + '%';
+    document.getElementById('val-placement2').innerHTML = branch2.placement2024 + '%';
+    document.getElementById('val-placement2026-1').innerHTML = branch1.placement2026 + '%';
+    document.getElementById('val-placement2026-2').innerHTML = branch2.placement2026 + '%';
+    document.getElementById('val-growth1').innerHTML = '+' + branch1.growth + '%';
+    document.getElementById('val-growth2').innerHTML = '+' + branch2.growth + '%';
+    document.getElementById('val-salary1').innerHTML = '₹' + branch1.salary + 'L';
+    document.getElementById('val-salary2').innerHTML = '₹' + branch2.salary + 'L';
+    document.getElementById('val-demand1').innerHTML = branch1.demand;
+    document.getElementById('val-demand2').innerHTML = branch2.demand;
+    document.getElementById('val-difficulty1').innerHTML = branch1.difficulty;
+    document.getElementById('val-difficulty2').innerHTML = branch2.difficulty;
+    
+    // Calculate differences
+    const placementDiff = branch1.placement2024 - branch2.placement2024;
+    const placement2026Diff = branch1.placement2026 - branch2.placement2026;
+    const salaryDiff = branch1.salary - branch2.salary;
+    const growthDiff = branch1.growth - branch2.growth;
+    
+    document.getElementById('diff-placement').innerHTML = (placementDiff > 0 ? '+' : '') + placementDiff + '%';
+    document.getElementById('diff-placement').className = placementDiff > 0 ? 'text-success' : (placementDiff < 0 ? 'text-danger' : 'text-secondary');
+    
+    document.getElementById('diff-placement2026').innerHTML = (placement2026Diff > 0 ? '+' : '') + placement2026Diff + '%';
+    document.getElementById('diff-placement2026').className = placement2026Diff > 0 ? 'text-success' : (placement2026Diff < 0 ? 'text-danger' : 'text-secondary');
+    
+    document.getElementById('diff-salary').innerHTML = (salaryDiff > 0 ? '+₹' : '₹') + Math.abs(salaryDiff).toFixed(1) + 'L';
+    document.getElementById('diff-salary').className = salaryDiff > 0 ? 'text-success' : (salaryDiff < 0 ? 'text-danger' : 'text-secondary');
+    
+    document.getElementById('diff-growth').innerHTML = (growthDiff > 0 ? '+' : '') + growthDiff + '%';
+    document.getElementById('diff-growth').className = growthDiff > 0 ? 'text-success' : (growthDiff < 0 ? 'text-danger' : 'text-secondary');
+    
+    // Update winner section
+    const score1 = branch1.placement2024 + branch1.salary * 8;
+    const score2 = branch2.placement2024 + branch2.salary * 8;
+    
+    let winnerMessage = '';
+    if (score1 > score2) {
+        winnerMessage = `${branch1.icon} ${branch1.name} is the better choice overall! 🏆`;
+    } else if (score2 > score1) {
+        winnerMessage = `${branch2.icon} ${branch2.name} is the better choice overall! 🏆`;
+    } else {
+        winnerMessage = `Both branches are equally good! ⚖️`;
+    }
+    
+    document.getElementById('winner-message').innerHTML = winnerMessage;
+    document.getElementById('winner-section').style.display = 'block';
+    
+    // Update charts
+    updateCharts(branch1, branch2);
+}
+
+function updateCharts(branch1, branch2) {
+    // Update Placement Chart
+    placementChart.data.datasets[0].label = branch1.name;
+    placementChart.data.datasets[0].data = [branch1.placement2024, branch1.placement2026];
+    placementChart.data.datasets[0].backgroundColor = branch1.color;
+    
+    placementChart.data.datasets[1].label = branch2.name;
+    placementChart.data.datasets[1].data = [branch2.placement2024, branch2.placement2026];
+    placementChart.data.datasets[1].backgroundColor = branch2.color;
+    
+    placementChart.update();
+    
+    // Update Salary Chart
+    salaryChart.data.datasets[0].label = branch1.name;
+    salaryChart.data.datasets[0].data = [branch1.salary, (branch1.salary * 1.12).toFixed(1)];
+    salaryChart.data.datasets[0].borderColor = branch1.color;
+    
+    salaryChart.data.datasets[1].label = branch2.name;
+    salaryChart.data.datasets[1].data = [branch2.salary, (branch2.salary * 1.12).toFixed(1)];
+    salaryChart.data.datasets[1].borderColor = branch2.color;
+    
+    salaryChart.update();
+    
+    // Update Radar Chart
+    radarChart.data.datasets[0].label = branch1.name;
+    radarChart.data.datasets[0].borderColor = branch1.color;
+    radarChart.data.datasets[0].pointBackgroundColor = branch1.color;
+    
+    radarChart.data.datasets[1].label = branch2.name;
+    radarChart.data.datasets[1].borderColor = branch2.color;
+    radarChart.data.datasets[1].pointBackgroundColor = branch2.color;
+    
+    radarChart.update();
+    
+    // Update Bubble Chart (highlight selected branches)
+    bubbleChart.data.datasets.forEach(dataset => {
+        dataset.backgroundColor = 'rgba(128, 128, 128, 0.5)';
+    });
+    
+    const branch1Dataset = bubbleChart.data.datasets.find(d => d.label === branch1.name);
+    const branch2Dataset = bubbleChart.data.datasets.find(d => d.label === branch2.name);
+    
+    if (branch1Dataset) branch1Dataset.backgroundColor = branch1.color;
+    if (branch2Dataset) branch2Dataset.backgroundColor = branch2.color;
+    
+    bubbleChart.update();
+}
+
+// Quick compare buttons
+function quickCompare(branch1Id, branch2Id) {
+    document.getElementById('branch1').value = branch1Id;
+    document.getElementById('branch2').value = branch2Id;
+    updateComparison();
+}
+</script>
+
+<!-- Quick Compare Shortcuts -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Compare</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary" onclick="quickCompare('cs', 'me')">
+                        💻 CS vs 🔧 ME
+                    </button>
+                    <button class="btn btn-outline-success" onclick="quickCompare('cs', 'ec')">
+                        💻 CS vs 📱 EC
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="quickCompare('me', 'ae')">
+                        🔧 ME vs ✈️ AE
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="quickCompare('ec', 'ae')">
+                        📱 EC vs ✈️ AE
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="quickCompare('ce', 'ch')">
+                        🏗️ CE vs ⚗️ CH
+                    </button>
+                    <button class="btn btn-outline-info" onclick="quickCompare('me', 'ec')">
+                        🔧 ME vs 📱 EC
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

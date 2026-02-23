@@ -1,0 +1,1063 @@
+{% extends 'analyzer/base.html' %}
+
+{% block title %}Course Recommendations{% endblock %}
+
+{% block content %}
+<style>
+    .course-card {
+        transition: all 0.3s;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+    .course-image {
+        height: 160px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+    }
+    .platform-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+    .nptel-badge { background-color: #ff6b6b; color: white; }
+    .coursera-badge { background-color: #0056d2; color: white; }
+    .edx-badge { background-color: #02262b; color: white; }
+    .udemy-badge { background-color: #ec5252; color: white; }
+    .free-badge { background-color: #28a745; color: white; }
+    .paid-badge { background-color: #dc3545; color: white; }
+    .branch-tab {
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .branch-tab:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .branch-tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .branch-tab.active .branch-icon {
+        color: white;
+    }
+    .branch-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .filter-btn {
+        border-radius: 25px;
+        padding: 8px 20px;
+        margin: 5px;
+        transition: all 0.3s;
+    }
+    .filter-btn.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    .skill-tag {
+        background-color: #e9ecef;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 2px;
+        display: inline-block;
+    }
+    .duration-badge {
+        background-color: #6c757d;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h1 class="display-4">🎓 Course Recommendations</h1>
+        <p class="lead">Find the best online courses for your engineering branch</p>
+        <hr>
+    </div>
+</div>
+
+<!-- Branch Selection Tabs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3"><i class="fas fa-graduation-cap me-2"></i>Select Your Branch</h4>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab active" onclick="filterByBranch('cs')" id="tab-cs">
+            <div class="branch-icon">💻</div>
+            <div class="fw-bold">CS</div>
+            <small>Computer Science</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('me')" id="tab-me">
+            <div class="branch-icon">🔧</div>
+            <div class="fw-bold">ME</div>
+            <small>Mechanical</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ce')" id="tab-ce">
+            <div class="branch-icon">🏗️</div>
+            <div class="fw-bold">CE</div>
+            <small>Civil</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ec')" id="tab-ec">
+            <div class="branch-icon">📱</div>
+            <div class="fw-bold">EC</div>
+            <small>Electronics</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ch')" id="tab-ch">
+            <div class="branch-icon">⚗️</div>
+            <div class="fw-bold">CH</div>
+            <small>Chemical</small>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-3">
+        <div class="branch-tab" onclick="filterByBranch('ae')" id="tab-ae">
+            <div class="branch-icon">✈️</div>
+            <div class="fw-bold">AE</div>
+            <small>Aerospace</small>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filter by Platform</h5>
+                <div>
+                    <button class="btn btn-outline-primary filter-btn active" onclick="filterByPlatform('all')" id="filter-all">All</button>
+                    <button class="btn btn-outline-danger filter-btn" onclick="filterByPlatform('nptel')" id="filter-nptel">NPTEL</button>
+                    <button class="btn btn-outline-primary filter-btn" onclick="filterByPlatform('coursera')" id="filter-coursera">Coursera</button>
+                    <button class="btn btn-outline-dark filter-btn" onclick="filterByPlatform('edx')" id="filter-edx">edX</button>
+                    <button class="btn btn-outline-secondary filter-btn" onclick="filterByPlatform('udemy')" id="filter-udemy">Udemy</button>
+                </div>
+                <div class="mt-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="freeOnly" onchange="toggleFree()">
+                        <label class="form-check-label" for="freeOnly">Show only free courses</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="beginnerOnly" onchange="toggleBeginner()">
+                        <label class="form-check-label" for="beginnerOnly">Beginner friendly only</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Computer Science Courses -->
+<div id="courses-cs" class="branch-courses">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-primary">💻 Computer Science Courses</h2>
+            <p class="text-muted">Recommended courses for CS/IT students</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Course 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Programming in Java</h5>
+                    <p class="card-text text-muted">Comprehensive Java programming course covering OOP concepts, data structures, and applications.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>12 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Java</span>
+                        <span class="skill-tag">OOP</span>
+                        <span class="skill-tag">Data Structures</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-primary" onclick="showCourseDetails('java')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="false" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Machine Learning by Andrew Ng</h5>
+                    <p class="card-text text-muted">World-famous ML course covering supervised learning, neural networks, and best practices.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>11 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Machine Learning</span>
+                        <span class="skill-tag">Python</span>
+                        <span class="skill-tag">Neural Networks</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-primary" onclick="showCourseDetails('ml')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="edx" data-free="true" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #02262b 0%, #0a4b5c 100%);">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <span class="platform-badge edx-badge">edX</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">CS50's Introduction to CS</h5>
+                    <p class="card-text text-muted">Harvard's famous introduction to computer science and programming.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>12 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">C</span>
+                        <span class="skill-tag">Python</span>
+                        <span class="skill-tag">Algorithms</span>
+                        <span class="skill-tag">SQL</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-primary" onclick="showCourseDetails('cs50')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 4 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="udemy" data-free="false" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #ec5252 0%, #a43535 100%);">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <span class="platform-badge udemy-badge">Udemy</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Web Development Bootcamp</h5>
+                    <p class="card-text text-muted">Complete web development course covering HTML, CSS, JavaScript, Node.js, and more.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>55 hours</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">HTML</span>
+                        <span class="skill-tag">CSS</span>
+                        <span class="skill-tag">JavaScript</span>
+                        <span class="skill-tag">Node.js</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-primary" onclick="showCourseDetails('webdev')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 5 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Data Structures & Algorithms</h5>
+                    <p class="card-text text-muted">In-depth coverage of data structures and algorithms with implementations.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">DSA</span>
+                        <span class="skill-tag">C++</span>
+                        <span class="skill-tag">Algorithms</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-primary" onclick="showCourseDetails('dsa')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 6 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="false" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Google IT Support Certificate</h5>
+                    <p class="card-text text-muted">Professional certificate covering IT support, networking, and security.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>6 months</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">IT Support</span>
+                        <span class="skill-tag">Networking</span>
+                        <span class="skill-tag">Security</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-primary" onclick="showCourseDetails('itsupport')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mechanical Engineering Courses -->
+<div id="courses-me" class="branch-courses" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-success">🔧 Mechanical Engineering Courses</h2>
+            <p class="text-muted">Recommended courses for Mechanical Engineering students</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Course 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Introduction to Electric Vehicles</h5>
+                    <p class="card-text text-muted">Comprehensive introduction to EV technology, motors, and battery systems.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">EV</span>
+                        <span class="skill-tag">Motors</span>
+                        <span class="skill-tag">Battery</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-success" onclick="showCourseDetails('ev')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="false" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Robotics Specialization</h5>
+                    <p class="card-text text-muted">Multi-course specialization covering kinematics, dynamics, and control.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>7 months</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Kinematics</span>
+                        <span class="skill-tag">Control</span>
+                        <span class="skill-tag">ROS</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-success" onclick="showCourseDetails('robotics')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="edx" data-free="true" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #02262b 0%, #0a4b5c 100%);">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <span class="platform-badge edx-badge">edX</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">CAD and Digital Manufacturing</h5>
+                    <p class="card-text text-muted">Learn CAD design, 3D printing, and digital manufacturing processes.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>9 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">CAD</span>
+                        <span class="skill-tag">3D Printing</span>
+                        <span class="skill-tag">Fusion 360</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-success" onclick="showCourseDetails('cad')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 4 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="advanced">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Automobile Engineering</h5>
+                    <p class="card-text text-muted">Advanced course covering vehicle dynamics, engines, and transmission systems.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-danger">Advanced</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>12 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Engine</span>
+                        <span class="skill-tag">Transmission</span>
+                        <span class="skill-tag">Vehicle Dynamics</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-success" onclick="showCourseDetails('auto')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 5 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-temperature-high"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Thermodynamics</h5>
+                    <p class="card-text text-muted">Comprehensive coverage of thermodynamic principles and applications.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Thermodynamics</span>
+                        <span class="skill-tag">Heat Transfer</span>
+                        <span class="skill-tag">Energy</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-success" onclick="showCourseDetails('thermo')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Civil Engineering Courses -->
+<div id="courses-ce" class="branch-courses" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-warning">🏗️ Civil Engineering Courses</h2>
+            <p class="text-muted">Recommended courses for Civil Engineering students</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Course 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Building Information Modeling</h5>
+                    <p class="card-text text-muted">Introduction to BIM concepts, tools, and applications in construction.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">BIM</span>
+                        <span class="skill-tag">Revit</span>
+                        <span class="skill-tag">Construction</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-warning" onclick="showCourseDetails('bim')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="false" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-hard-hat"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Construction Management</h5>
+                    <p class="card-text text-muted">Learn project management principles for construction projects.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>6 months</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Project Management</span>
+                        <span class="skill-tag">Planning</span>
+                        <span class="skill-tag">Safety</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-warning" onclick="showCourseDetails('constr')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="edx" data-free="true" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #02262b 0%, #0a4b5c 100%);">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <span class="platform-badge edx-badge">edX</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Sustainable Building Design</h5>
+                    <p class="card-text text-muted">Learn about green building materials, energy efficiency, and sustainable design.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>10 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Green Building</span>
+                        <span class="skill-tag">LEED</span>
+                        <span class="skill-tag">Sustainability</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-warning" onclick="showCourseDetails('sustainable')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Electronics Engineering Courses -->
+<div id="courses-ec" class="branch-courses" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-danger">📱 Electronics Engineering Courses</h2>
+            <p class="text-muted">Recommended courses for Electronics Engineering students</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Course 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="advanced">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">VLSI Design</h5>
+                    <p class="card-text text-muted">Advanced course on VLSI circuit design, fabrication, and testing.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-danger">Advanced</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>12 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">VLSI</span>
+                        <span class="skill-tag">FPGA</span>
+                        <span class="skill-tag">Verilog</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-danger" onclick="showCourseDetails('vlsi')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="false" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">IoT Programming and Big Data</h5>
+                    <p class="card-text text-muted">Learn IoT architecture, programming, and data analytics.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>7 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">IoT</span>
+                        <span class="skill-tag">Arduino</span>
+                        <span class="skill-tag">Raspberry Pi</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-danger" onclick="showCourseDetails('iot')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="edx" data-free="true" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #02262b 0%, #0a4b5c 100%);">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <span class="platform-badge edx-badge">edX</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Embedded Systems</h5>
+                    <p class="card-text text-muted">Introduction to embedded systems design and programming.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Embedded C</span>
+                        <span class="skill-tag">Microcontrollers</span>
+                        <span class="skill-tag">ARM</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-danger" onclick="showCourseDetails('embedded')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chemical Engineering Courses -->
+<div id="courses-ch" class="branch-courses" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-purple">⚗️ Chemical Engineering Courses</h2>
+            <p class="text-muted">Recommended courses for Chemical Engineering students</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Course 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="advanced">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #9b59b6 0%, #6c3483 100%);">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Process Integration and Optimization</h5>
+                    <p class="card-text text-muted">Advanced course on chemical process integration and optimization techniques.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-danger">Advanced</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Process Design</span>
+                        <span class="skill-tag">Optimization</span>
+                        <span class="skill-tag">ASPEN</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-purple" onclick="showCourseDetails('process')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="true" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-dna"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Introduction to Chemistry</h5>
+                    <p class="card-text text-muted">Foundation course covering basic chemistry concepts and reactions.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>7 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Chemistry</span>
+                        <span class="skill-tag">Reactions</span>
+                        <span class="skill-tag">Stoichiometry</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-purple" onclick="showCourseDetails('chem101')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aerospace Engineering Courses -->
+<div id="courses-ae" class="branch-courses" style="display: none;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-info">✈️ Aerospace Engineering Courses</h2>
+            <p class="text-muted">Recommended courses for Aerospace Engineering students</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Course 1 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="nptel" data-free="true" data-level="advanced">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image">
+                        <i class="fas fa-wind"></i>
+                    </div>
+                    <span class="platform-badge nptel-badge">NPTEL</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Aerodynamics</h5>
+                    <p class="card-text text-muted">Advanced course on fluid dynamics and aerodynamic principles.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-danger">Advanced</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>12 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Aerodynamics</span>
+                        <span class="skill-tag">CFD</span>
+                        <span class="skill-tag">Fluid Mechanics</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-info" onclick="showCourseDetails('aero')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="coursera" data-free="false" data-level="intermediate">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #0056d2 0%, #003d99 100%);">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <span class="platform-badge coursera-badge">Coursera</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Flight Mechanics</h5>
+                    <p class="card-text text-muted">Study of aircraft flight dynamics and control systems.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-warning text-dark">Intermediate</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>8 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Flight Dynamics</span>
+                        <span class="skill-tag">Control</span>
+                        <span class="skill-tag">Stability</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge paid-badge"><i class="fas fa-rupee-sign me-1"></i>Paid</span>
+                        <a href="#" class="btn btn-sm btn-info" onclick="showCourseDetails('flight')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course 3 -->
+        <div class="col-lg-4 col-md-6 mb-4 course-item" data-platform="edx" data-free="true" data-level="beginner">
+            <div class="course-card">
+                <div class="position-relative">
+                    <div class="course-image" style="background: linear-gradient(135deg, #02262b 0%, #0a4b5c 100%);">
+                        <i class="fas fa-plane"></i>
+                    </div>
+                    <span class="platform-badge edx-badge">edX</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Introduction to Aeronautical Engineering</h5>
+                    <p class="card-text text-muted">Foundation course covering basic aeronautical concepts.</p>
+                    <div class="mb-2">
+                        <span class="badge bg-success">Beginner</span>
+                        <span class="duration-badge ms-2"><i class="far fa-clock me-1"></i>7 weeks</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="skill-tag">Aeronautics</span>
+                        <span class="skill-tag">Propulsion</span>
+                        <span class="skill-tag">Structures</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge free-badge"><i class="fas fa-check-circle me-1"></i>Free</span>
+                        <a href="#" class="btn btn-sm btn-info" onclick="showCourseDetails('aero101')">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Details Modal -->
+<div class="modal fade" id="courseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Course Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentBranch = 'cs';
+let currentPlatform = 'all';
+let freeOnly = false;
+let beginnerOnly = false;
+
+function filterByBranch(branch) {
+    // Update active tab
+    document.querySelectorAll('.branch-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(`tab-${branch}`).classList.add('active');
+    
+    // Hide all branch sections
+    document.querySelectorAll('.branch-courses').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show selected branch
+    document.getElementById(`courses-${branch}`).style.display = 'block';
+    currentBranch = branch;
+    
+    // Apply current filters
+    applyFilters();
+}
+
+function filterByPlatform(platform) {
+    // Update active filter
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`filter-${platform}`).classList.add('active');
+    
+    currentPlatform = platform;
+    applyFilters();
+}
+
+function toggleFree() {
+    freeOnly = document.getElementById('freeOnly').checked;
+    applyFilters();
+}
+
+function toggleBeginner() {
+    beginnerOnly = document.getElementById('beginnerOnly').checked;
+    applyFilters();
+}
+
+function applyFilters() {
+    const courses = document.querySelectorAll(`#courses-${currentBranch} .course-item`);
+    
+    courses.forEach(course => {
+        let show = true;
+        
+        // Platform filter
+        if (currentPlatform !== 'all' && course.dataset.platform !== currentPlatform) {
+            show = false;
+        }
+        
+        // Free filter
+        if (freeOnly && course.dataset.free !== 'true') {
+            show = false;
+        }
+        
+        // Beginner filter
+        if (beginnerOnly && course.dataset.level !== 'beginner') {
+            show = false;
+        }
+        
+        course.style.display = show ? 'block' : 'none';
+    });
+}
+
+function showCourseDetails(courseId) {
+    const modal = new bootstrap.Modal(document.getElementById('courseModal'));
+    
+    // Course details mapping
+    const details = {
+        'java': {
+            title: 'Programming in Java - NPTEL',
+            instructor: 'Prof. Debasis Samanta, IIT Kharagpur',
+            syllabus: ['Week 1: Java Basics', 'Week 2: OOP Concepts', 'Week 3: Inheritance', 'Week 4: Polymorphism', 'Week 5: Exception Handling', 'Week 6: Multithreading', 'Week 7: Collections', 'Week 8: File I/O', 'Week 9-12: Advanced Topics'],
+            rating: '4.7/5',
+            students: '50,000+ enrolled'
+        },
+        'ml': {
+            title: 'Machine Learning - Coursera',
+            instructor: 'Andrew Ng, Stanford University',
+            syllabus: ['Week 1: Introduction', 'Week 2: Linear Regression', 'Week 3: Classification', 'Week 4: Neural Networks', 'Week 5: Backpropagation', 'Week 6: Advice for ML', 'Week 7: SVM', 'Week 8: Unsupervised Learning', 'Week 9: Anomaly Detection', 'Week 10: Large Scale ML', 'Week 11: Application'],
+            rating: '4.9/5',
+            students: '4M+ enrolled'
+        },
+        'cs50': {
+            title: 'CS50 - edX',
+            instructor: 'David J. Malan, Harvard University',
+            syllabus: ['Week 0: Scratch', 'Week 1: C', 'Week 2: Arrays', 'Week 3: Algorithms', 'Week 4: Memory', 'Week 5: Data Structures', 'Week 6: Python', 'Week 7: SQL', 'Week 8: HTML/CSS/JS', 'Week 9: Flask', 'Week 10: Final Project'],
+            rating: '4.8/5',
+            students: '2M+ enrolled'
+        },
+        'ev': {
+            title: 'Introduction to Electric Vehicles - NPTEL',
+            instructor: 'Prof. Amit Jain, IIT Delhi',
+            syllabus: ['Week 1: EV Overview', 'Week 2: Motors', 'Week 3: Controllers', 'Week 4: Batteries', 'Week 5: Charging', 'Week 6: Standards', 'Week 7-8: Case Studies'],
+            rating: '4.6/5',
+            students: '25,000+ enrolled'
+        }
+    };
+    
+    const course = details[courseId] || {
+        title: 'Course Details',
+        instructor: 'Information not available',
+        syllabus: ['Module 1', 'Module 2', 'Module 3'],
+        rating: '4.5/5',
+        students: '10,000+ enrolled'
+    };
+    
+    let syllabusHtml = '';
+    course.syllabus.forEach(item => {
+        syllabusHtml += `<li>${item}</li>`;
+    });
+    
+    document.getElementById('modalBody').innerHTML = `
+        <h6 class="text-primary">${course.title}</h6>
+        <p><strong>Instructor:</strong> ${course.instructor}</p>
+        <p><strong>Rating:</strong> ${course.rating} ⭐</p>
+        <p><strong>Students:</strong> ${course.students}</p>
+        <h6 class="mt-3">Syllabus:</h6>
+        <ul>${syllabusHtml}</ul>
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Certificate available upon completion
+        </div>
+    `;
+    
+    modal.show();
+}
+
+// Add purple button style
+const style = document.createElement('style');
+style.innerHTML = `
+    .btn-purple {
+        background-color: #9b59b6;
+        border-color: #9b59b6;
+        color: white;
+    }
+    .btn-purple:hover {
+        background-color: #8e44ad;
+        border-color: #8e44ad;
+        color: white;
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+<!-- Add purple color styles -->
+<style>
+    .text-purple {
+        color: #9b59b6 !important;
+    }
+    .bg-purple {
+        background-color: #9b59b6 !important;
+    }
+</style>
+{% endblock %}
